@@ -1,0 +1,36 @@
+core_plugin: docker-swarm
+service_discovery_plugin: docker-swarm
+service_discovery_auto: true
+
+plugin_config:
+    docker-swarm:
+        volumes:
+            db_data2:
+                from: sks_db_data2
+            wp_data2:
+                from: sks_wp_data2
+
+vars:
+    db_port:      "3366"
+    db_user:      wordpress
+    db_password:  wordpress
+    db_database:  wordpress
+    db_secret:    my_secret
+
+quality_gates:
+    mariadb:
+        images:
+            - mariadb
+            - mariadb:*
+            - healthcheck/mariadb
+            - healthcheck/mariadb:*
+        steps:
+            - probe:
+                image:   opsani/probe-mariadb
+                action:  check_access
+                label:   "Probe mariadb check_access port ${db_port}"
+                arguments:
+                    user: "${db_user}"
+                    password: "${db_password}"
+                    database: "${db_database}"
+                    port: "${db_port}"

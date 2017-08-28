@@ -2,21 +2,16 @@ version: '3'
 
 services:
     db:
-        image: mariadb:10.3  # 10, 10.3, 10.3.0
+        # image has built-in healthcheck
+        image: healthcheck/mariadb
         volumes:
-            - db_data:/var/lib/mysql
-        command:  ["mysqld", "--port=3306"]
-        #command:  ["mysqld", "--port=3306", "--bind-address=127.0.0.1"]
+            - db_data2:/var/lib/mysql
+        command:  ["mysqld", "--extra-port=3366"]
         environment:
             MYSQL_ROOT_PASSWORD: my_secret
             MYSQL_DATABASE: wordpress
             MYSQL_USER: wordpress
             MYSQL_PASSWORD: wordpress
-        healthcheck:
-            test: ["CMD", "echo", "'show databases'", "|", "mysql", "--user=$MYSQL_USER", "--password=$MYSQL_PASSWORD"]
-            interval: 15s
-            timeout: 3s
-            retries: 3
         deploy:
             placement:
                 constraints: [node.role == manager]
@@ -24,13 +19,13 @@ services:
     wordpress:
         image: wordpress:4.8.0-php7.0  # 4.8.0-php7.0 or 4.8.0-php7.1
         volumes:
-            - wp_data:/var/www/html
+            - wp_data2:/var/www/html
         depends_on:
             - db
         ports:
-            - "8080:80"
+            - "8081:80"
         environment:
-            WORDPRESS_DB_HOST: db:3306
+            WORDPRESS_DB_HOST: db:3366
             WORDPRESS_DB_USER: wordpress
             WORDPRESS_DB_PASSWORD: wordpress
             WORDPRESS_DB_NAME: wordpress
@@ -41,9 +36,5 @@ services:
             retries: 3
 
 volumes:
-    db_data:
-    wp_data:
-
-# Notes:
-# - to use a config file, add db_conf: to volumes:.  Also, add:
-#   db_conf:/etc/mysql/conf.d  (to db volumes:)
+    db_data2:
+    wp_data2:

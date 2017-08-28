@@ -3,22 +3,24 @@ version: 1
 
 components:
     db:
-        image: mariadb:10.3     # 10, 10.3, 10.3.0
+        # repo:  https://hub.docker.com/r/healthcheck/mariadb/
+        # check:  https://github.com/docker-library/healthcheck/blob/master/mysql/docker-healthcheck
+        image: healthcheck/mariadb
         singleton: true
         provides:
-            ports: ["3306"]
+            ports: ["${db_port}"]
         env:
             MYSQL_USER: ${db_user}
             MYSQL_PASSWORD: ${db_password}
             MYSQL_DATABASE: ${db_database}
             MYSQL_ROOT_PASSWORD: ${db_secret}
         volumes:
-            db_data:
+            db_data2:
                 path: /var/lib/mysql
         plugin:
             docker-swarm:
-                args: ["--port=3306"]
-                #args:  ["--port=3306", "--bind-address=127.0.0.1"]
+                # comment out 'args' line to inject failure
+                args: ["--extra-port=${db_port}"]
                 raw:
                     TaskTemplate:
                         Placement:
@@ -36,13 +38,14 @@ components:
         uses:
             db: {}
         env:
-            WORDPRESS_DB_HOST: db:3306
+            WORDPRESS_DB_HOST: db:${db_port}
             WORDPRESS_DB_USER: ${db_user}
             WORDPRESS_DB_PASSWORD: ${db_password}
             WORDPRESS_DB_NAME: ${db_database}
         volumes:
-            wp_data:
+            wp_data2:
                 path: /var/www/html
+        visual:
         visual:
             x: 400
             y: 100
@@ -50,9 +53,9 @@ components:
 doctype: com.datagridsys.doctype/skopos/model
 version: 1
 gateways:
-    hp-80:
+    hp-8082:
         exposes:
-            - port: "80"
+            - port: "8082"
               target_port: "80"
         target: [wordpress]
         type: host_port
