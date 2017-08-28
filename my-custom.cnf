@@ -1,0 +1,5 @@
+[mysqld]
+skip-host-cache
+skip-name-resolve
+port = 3306
+bind-address = 127.0.0.1

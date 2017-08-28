@@ -1,0 +1,61 @@
+doctype: com.datagridsys.doctype/skopos/model
+version: 1
+
+components:
+    db:
+        image: mariadb:10.3     # 10, 10.3, 10.3.0
+        singleton: true
+        provides:
+            ports: ["3306"]
+        env:
+            MYSQL_USER: ${db_user}
+            MYSQL_PASSWORD: ${db_password}
+            MYSQL_DATABASE: ${db_database}
+            MYSQL_ROOT_PASSWORD: ${db_secret}
+        volumes:
+            db_data:
+                path: /var/lib/mysql
+        plugin:
+            docker-swarm:
+                args: ["--port=3306"]
+                #args:  ["--port=3306", "--bind-address=127.0.0.1"]
+                raw:
+                    TaskTemplate:
+                        Placement:
+                            Constraints:
+                                - node.role == manager
+        visual:
+            x: 700
+            y: 100
+
+    wordpress:
+        image: wordpress:4.8.0-php7.0     # 4.8.0-php7.0 or 4.8.0-php7.1
+        singleton: true
+        provides:
+            ports: ["80"]
+        uses:
+            db: {}
+        env:
+            WORDPRESS_DB_HOST: db:3306
+            WORDPRESS_DB_USER: ${db_user}
+            WORDPRESS_DB_PASSWORD: ${db_password}
+            WORDPRESS_DB_NAME: ${db_database}
+        volumes:
+            wp_data:
+                path: /var/www/html
+        visual:
+            x: 400
+            y: 100
+
+doctype: com.datagridsys.doctype/skopos/model
+version: 1
+gateways:
+    hp-8081:
+        exposes:
+            - port: "80"
+              target_port: "80"
+        target: [wordpress]
+        type: host_port
+        visual:
+            x: 100
+            y: 100
