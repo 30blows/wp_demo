@@ -2,27 +2,28 @@ version: '3'
 
 services:
     db:
-        image: mariadb:10.3  # 10, 10.3, 10.3.0
+        image: mysql:5.7.18
+        #image: mysql:5.7
         volumes:
             - db_data:/var/lib/mysql
-        command:  ["mysqld", "--port=3306"]
-        #command:  ["mysqld", "--port=3306", "--bind-address=127.0.0.1"]
+            #- db_conf:/etc/mysql/conf.d
         environment:
             MYSQL_ROOT_PASSWORD: my_secret
             MYSQL_DATABASE: wordpress
             MYSQL_USER: wordpress
             MYSQL_PASSWORD: wordpress
         healthcheck:
-            test: ["CMD", "echo", "'show databases'", "|", "mysql", "--user=$MYSQL_USER", "--password=$MYSQL_PASSWORD"]
-            interval: 15s
-            timeout: 3s
-            retries: 3
+            test: "mysqladmin --user=$MYSQL_USER --password=$MYSQL_PASSWORD ping"
+            interval: 10s
+            timeout: 2s
+            retries: 2
         deploy:
-            placement:
-                constraints: [node.role == manager]
+            restart_policy:
+                max_attempts: 2
 
     wordpress:
-        image: wordpress:4.8.0-php7.0  # 4.8.0-php7.0 or 4.8.0-php7.1
+        image: wordpress:4-php7.0
+        #image: wordpress:4-php7.1
         volumes:
             - wp_data:/var/www/html
         depends_on:
@@ -35,15 +36,15 @@ services:
             WORDPRESS_DB_PASSWORD: wordpress
             WORDPRESS_DB_NAME: wordpress
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost"]
-            interval: 15s
-            timeout: 3s
-            retries: 3
+            test: "curl -f http://localhost"
+            interval: 10s
+            timeout: 2s
+            retries: 2
+        deploy:
+            restart_policy:
+                max_attempts: 2
 
 volumes:
     db_data:
+    db_conf:
     wp_data:
-
-# Notes:
-# - to use a config file, add db_conf: to volumes:.  Also, add:
-#   db_conf:/etc/mysql/conf.d  (to db volumes:)
